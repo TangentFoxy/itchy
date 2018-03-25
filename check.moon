@@ -5,32 +5,49 @@ http = require "socket.http"
 receive = thread.getChannel "send-itchy"
 send = thread.getChannel "receive-itchy"
 
-check = (data, send_errors=true) ->
+check = (data) ->
   exponential_backoff = 1
   while true
-    local body, status
+    result = {}
     if data.url
-      body, status = http.request data.url
+      result.body, result.status = http.request data.url
     elseif data.proxy
-      body, status = http.request "#{data.proxy}/get/https://itch.io/api/1/x/wharf/latest?target=#{data.target}&channel_name=#{data.channel}"
+      unless data.target
+        result.message = "'target' or 'url' must be defined!"
+        send\push result
+        return false
+      result.body, result.status = http.request "#{data.proxy}/get/https://itch.io/api/1/x/wharf/latest?target=#{data.target}&channel_name=#{data.channel}"
 
-    if status == 200
-      latest = body\match '%s*{%s*"latest"%s*:%s*"(.+)"%s*}%s*'
-      send\push latest
-      return true
-    else
-      if send_errors
-        send\push "unknown, error getting latest version: HTTP #{status}, trying again in #{exponential_backoff} seconds"
+    unless result.body
+      result.message = "socket.http.request error: #{status}"
+      send\push result
+      return false
+
+    result.version = result.body\match '%s*{%s*"latest"%s*:%s*"(.+)"%s*}%s*'
+    result.version = tonumber(result.version) or result.version
+    result.latest = if data.version
+      result.version == data.version
+
+    if status != 200 and (not version)
+      result.message = "unknown, error getting latest version: HTTP #{status}, trying again in #{exponential_backoff} seconds"
+      send\push result
       timer.sleep exponential_backoff
-      exponential_backoff = exponential_backoff * 2
+      exponential_backoff *= 2
+      continue
+    elseif latest != nil
+      if latest
+        result.message = "#{result.version}, you have the latest version"
+      else
+        result.message = "#{result.version}, there is a newer version available!"
+    else
+      result.message = result.version
+
+    send\push result
+    return true
 
 start = ->
   -- data should be a table of information
   data = receive\demand!
-  unless data.target
-    error "Target undefined. Cannot search for latest version of unknown target!"
-
-  data.version = "0" unless data.version
   data.proxy = "http://104.236.139.220:16343" unless data.proxy or data.url
 
   -- channel can be autodetected if not specified
@@ -61,7 +78,7 @@ start = ->
       -- if we are sent new data, start over entirely
       if receive\getCount! > 0
         return start!
-
-      check data, data.send_interval_errors
+      else
+        check data
 
 start!

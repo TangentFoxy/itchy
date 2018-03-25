@@ -8,40 +8,62 @@ local http = require("socket.http")
 local receive = thread.getChannel("send-itchy")
 local send = thread.getChannel("receive-itchy")
 local check
-check = function(data, send_errors)
-  if send_errors == nil then
-    send_errors = true
-  end
+check = function(data)
   local exponential_backoff = 1
   while true do
-    local body, status
-    if data.url then
-      body, status = http.request(data.url)
-    elseif data.proxy then
-      body, status = http.request(tostring(data.proxy) .. "/get/https://itch.io/api/1/x/wharf/latest?target=" .. tostring(data.target) .. "&channel_name=" .. tostring(data.channel))
-    end
-    if status == 200 then
-      local latest = body:match('%s*{%s*"latest"%s*:%s*"(.+)"%s*}%s*')
-      send:push(latest)
-      return true
-    else
-      if send_errors then
-        send:push("unknown, error getting latest version: HTTP " .. tostring(status) .. ", trying again in " .. tostring(exponential_backoff) .. " seconds")
+    local _continue_0 = false
+    repeat
+      do
+        local result = { }
+        if data.url then
+          result.body, result.status = http.request(data.url)
+        elseif data.proxy then
+          if not (data.target) then
+            result.message = "'target' or 'url' must be defined!"
+            send:push(result)
+            return false
+          end
+          result.body, result.status = http.request(tostring(data.proxy) .. "/get/https://itch.io/api/1/x/wharf/latest?target=" .. tostring(data.target) .. "&channel_name=" .. tostring(data.channel))
+        end
+        if not (result.body) then
+          result.message = "socket.http.request error: " .. tostring(status)
+          send:push(result)
+          return false
+        end
+        result.version = result.body:match('%s*{%s*"latest"%s*:%s*"(.+)"%s*}%s*')
+        result.version = tonumber(result.version) or result.version
+        if data.version then
+          result.latest = result.version == data.version
+        end
+        if status ~= 200 and (not version) then
+          result.message = "unknown, error getting latest version: HTTP " .. tostring(status) .. ", trying again in " .. tostring(exponential_backoff) .. " seconds"
+          send:push(result)
+          timer.sleep(exponential_backoff)
+          exponential_backoff = exponential_backoff * 2
+          _continue_0 = true
+          break
+        elseif latest ~= nil then
+          if latest then
+            result.message = tostring(result.version) .. ", you have the latest version"
+          else
+            result.message = tostring(result.version) .. ", there is a newer version available!"
+          end
+        else
+          result.message = result.version
+        end
+        send:push(result)
+        return true
       end
-      timer.sleep(exponential_backoff)
-      exponential_backoff = exponential_backoff * 2
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
     end
   end
 end
 local start
 start = function()
   local data = receive:demand()
-  if not (data.target) then
-    error("Target undefined. Cannot search for latest version of unknown target!")
-  end
-  if not (data.version) then
-    data.version = "0"
-  end
   if not (data.proxy or data.url) then
     data.proxy = "http://104.236.139.220:16343"
   end
@@ -69,8 +91,9 @@ start = function()
       timer.sleep(data.interval)
       if receive:getCount() > 0 then
         return start()
+      else
+        check(data)
       end
-      check(data, data.send_interval_errors)
     end
   end
 end

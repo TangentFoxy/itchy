@@ -19,7 +19,7 @@ check = (data) ->
       result.body, result.status = http.request "#{data.proxy}/get/https://itch.io/api/1/x/wharf/latest?target=#{data.target}&channel_name=#{data.channel}"
 
     unless result.body
-      result.message = "socket.http.request error: #{status}"
+      result.message = "socket.http.request error: #{result.status}"
       send\push result
       return false
 
@@ -28,8 +28,8 @@ check = (data) ->
     result.latest = if data.version
       result.version == data.version
 
-    if status != 200 and (not version)
-      result.message = "unknown, error getting latest version: HTTP #{status}, trying again in #{exponential_backoff} seconds"
+    if result.status != 200 and (not result.version)
+      result.message = "unknown, error getting latest version: HTTP #{result.status}, trying again in #{exponential_backoff} seconds"
       send\push result
       timer.sleep exponential_backoff
       exponential_backoff *= 2

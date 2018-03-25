@@ -34,8 +34,8 @@ check = (data) ->
       timer.sleep exponential_backoff
       exponential_backoff *= 2
       continue
-    elseif latest != nil
-      if latest
+    elseif result.latest != nil
+      if result.latest
         result.message = "#{result.version}, you have the latest version"
       else
         result.message = "#{result.version}, there is a newer version available!"

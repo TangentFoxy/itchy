@@ -26,7 +26,7 @@ check = function(data)
           result.body, result.status = http.request(tostring(data.proxy) .. "/get/https://itch.io/api/1/x/wharf/latest?target=" .. tostring(data.target) .. "&channel_name=" .. tostring(data.channel))
         end
         if not (result.body) then
-          result.message = "socket.http.request error: " .. tostring(status)
+          result.message = "socket.http.request error: " .. tostring(result.status)
           send:push(result)
           return false
         end
@@ -35,15 +35,15 @@ check = function(data)
         if data.version then
           result.latest = result.version == data.version
         end
-        if status ~= 200 and (not version) then
-          result.message = "unknown, error getting latest version: HTTP " .. tostring(status) .. ", trying again in " .. tostring(exponential_backoff) .. " seconds"
+        if result.status ~= 200 and (not result.version) then
+          result.message = "unknown, error getting latest version: HTTP " .. tostring(result.status) .. ", trying again in " .. tostring(exponential_backoff) .. " seconds"
           send:push(result)
           timer.sleep(exponential_backoff)
           exponential_backoff = exponential_backoff * 2
           _continue_0 = true
           break
-        elseif latest ~= nil then
-          if latest then
+        elseif result.latest ~= nil then
+          if result.latest then
             result.message = tostring(result.version) .. ", you have the latest version"
           else
             result.message = tostring(result.version) .. ", there is a newer version available!"

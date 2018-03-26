@@ -65,7 +65,7 @@ local start
 start = function()
   local data = receive:demand()
   if not (data.proxy or data.url) then
-    data.proxy = "http://104.236.139.220:16343"
+    data.proxy = "http://45.55.113.149:16343"
   end
   if not (data.channel) then
     require("love.system")

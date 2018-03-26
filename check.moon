@@ -48,7 +48,7 @@ check = (data) ->
 start = ->
   -- data should be a table of information
   data = receive\demand!
-  data.proxy = "http://104.236.139.220:16343" unless data.proxy or data.url
+  data.proxy = "http://45.55.113.149:16343" unless data.proxy or data.url
 
   -- channel can be autodetected if not specified
   unless data.channel

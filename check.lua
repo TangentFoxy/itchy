@@ -5,10 +5,9 @@ do
   thread, timer = _obj_0.thread, _obj_0.timer
 end
 local http = require("socket.http")
-local receive = thread.getChannel("send-itchy")
-local send = thread.getChannel("receive-itchy")
 local check
 check = function(data)
+  local send = thread.getChannel(data.thread_channel or "itchy")
   local exponential_backoff = 1
   while true do
     local _continue_0 = false
@@ -40,6 +39,9 @@ check = function(data)
           send:push(result)
           timer.sleep(exponential_backoff)
           exponential_backoff = exponential_backoff * 2
+          if exponential_backoff > 10 * 60 then
+            exponential_backoff = 10 * 60
+          end
           _continue_0 = true
           break
         elseif result.latest ~= nil then
@@ -62,8 +64,7 @@ check = function(data)
   end
 end
 local start
-start = function()
-  local data = receive:demand()
+start = function(data)
   if not (data.proxy or data.url) then
     data.proxy = "http://45.55.113.149:16343"
   end
@@ -89,12 +90,8 @@ start = function()
   if data.interval then
     while true do
       timer.sleep(data.interval)
-      if receive:getCount() > 0 then
-        return start()
-      else
-        check(data)
-      end
+      check(data)
     end
   end
 end
-return start()
+return start(...)

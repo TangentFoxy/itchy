@@ -2,10 +2,10 @@ require "love.timer"
 import thread, timer from love
 
 http = require "socket.http"
-receive = thread.getChannel "send-itchy"
-send = thread.getChannel "receive-itchy"
 
 check = (data) ->
+  send = thread.getChannel data.thread_channel or "itchy"
+
   exponential_backoff = 1
   while true
     result = {}
@@ -33,6 +33,7 @@ check = (data) ->
       send\push result
       timer.sleep exponential_backoff
       exponential_backoff *= 2
+      exponential_backoff = 10 * 60 if exponential_backoff > 10 * 60 -- maximum backoff is 10 minutes
       continue
     elseif result.latest != nil
       if result.latest
@@ -45,9 +46,8 @@ check = (data) ->
     send\push result
     return true
 
-start = ->
-  -- data should be a table of information
-  data = receive\demand!
+-- data should be a table of information
+start = (data) ->
   data.proxy = "http://45.55.113.149:16343" unless data.proxy or data.url
 
   -- channel can be autodetected if not specified
@@ -74,11 +74,6 @@ start = ->
   if data.interval
     while true
       timer.sleep data.interval
+      check data
 
-      -- if we are sent new data, start over entirely
-      if receive\getCount! > 0
-        return start!
-      else
-        check data
-
-start!
+start(...)

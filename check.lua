@@ -22,7 +22,7 @@ check = function(data)
             send:push(result)
             return false
           end
-          result.body, result.status = http.request(tostring(data.proxy) .. "/get/https://itch.io/api/1/x/wharf/latest?target=" .. tostring(data.target) .. "&channel_name=" .. tostring(data.channel))
+          result.body, result.status = http.request(tostring(data.proxy) .. "/get/https://api.itch.io/wharf/latest?target=" .. tostring(data.target) .. "&channel_name=" .. tostring(data.channel))
         end
         if not (result.body) then
           result.message = "socket.http.request error: " .. tostring(result.status)

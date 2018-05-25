@@ -16,7 +16,7 @@ check = (data) ->
         result.message = "'target' or 'url' must be defined!"
         send\push result
         return false
-      result.body, result.status = http.request "#{data.proxy}/get/https://itch.io/api/1/x/wharf/latest?target=#{data.target}&channel_name=#{data.channel}"
+      result.body, result.status = http.request "#{data.proxy}/get/https://api.itch.io/wharf/latest?target=#{data.target}&channel_name=#{data.channel}"
 
     unless result.body
       result.message = "socket.http.request error: #{result.status}"

@@ -9,6 +9,19 @@ Copy `itchy.lua` to where you want in your source. It is recommended that you
 install [luajit-request](https://github.com/LPGhatguy/luajit-request) as it
 allows for itchy to use HTTPS connections.
 
+luajit-request on Windows requires a libcurl DLL to be alongside the executable
+of a fused game, or in the root-level source directory for an unfused game. You
+can find them [here](https://curl.haxx.se/download.html). On Mac OS, this should
+be already installed, and most Linux distributions have it installed already.
+Please tell your Linux users to install libcurl if they do not have it and you
+are relying on its functionality.
+
+(I don't remember which of these is which, but I have verified
+[this DLL](https://mega.nz/#!EMVA3brL!7D8rycffbEU2qem6N_JTeuZOdwGwOl-zp3Z3wgGpKXQ)
+works for 32-bit builds, and
+[this DLL](https://mega.nz/#!5Md0jbBK!9KpcPQnN0hVtYd5_OzjNoQWf5wFJ7rG7SfPuSaMMQCU)
+is the 64-bit version of it.)
+
 ## Usage
 
 Start it as a thread with a configuration table. Wait for "itchy" channel to

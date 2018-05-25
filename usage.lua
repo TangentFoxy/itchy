@@ -1,12 +1,13 @@
-versionChecker = love.thread.newThread("lib/itchy/check.lua") -- wherever you save it..
-versionChecker:start({
-  target = "guard13007/asteroid-dodge", -- target/url must be defined
-  version = "1.0.0"                     -- optional
-})
+local itchy = require "lib.itchy"       -- or wherever you saved it
+local game = {
+  target = "guard13007/asteroid-dodge", -- target or url must be defined
+  version = "1.0.0"                     -- optional, config options listed below
+}
+itchy:check_version(game)
 
-newVersion = love.thread.getChannel("itchy")
-if newVersion:getCount() > 0 then
-  local data = newVersion:demand()
-  -- easiest usage is to just print something like this to the user
-  print("Version: 1.0.0 Latest version: " .. data.message)
+-- somewhere where this will be called periodically
+local data = itchy:new_version(game)  -- passing the game table is not necessary
+if data then
+  -- easiest usage, just print the message to the user
+  love.graphics.print("Version: 1.0.0 Latest: " .. data.message)
 end

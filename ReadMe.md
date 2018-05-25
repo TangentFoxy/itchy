@@ -5,30 +5,36 @@ published on [itch.io](https://itch.io/).
 
 ## Installation
 
-Just copy `check.lua` to where you want in your source.
+Copy `itchy.lua` to where you want in your source. It is recommended that you
+install [luajit-request](https://github.com/LPGhatguy/luajit-request) as it
+allows for itchy to use HTTPS connections.
 
 ## Usage
 
 Start it as a thread with a configuration table. Wait for "itchy" channel to
 respond with a table of version information.
 
-```lua
-versionChecker = love.thread.newThread("lib/itchy/check.lua") -- wherever you save it..
-versionChecker:start({
-  target = "guard13007/asteroid-dodge", -- target/url must be defined
-  version = "1.0.0"                     -- optional, config options listed below
-})
+Require itchy, and run `check_version` with a configuration table. Periodically
+run `new_version` to see if data has been returned yet.
 
-newVersion = love.thread.getChannel("itchy")
-if newVersion:getCount() > 0 then
-  local data = newVersion:demand() -- see example data below
-  -- easiest usage is to just print something like this to the user
-  print("Version: 1.0.0 Latest version: " .. data.message)
+```lua
+local itchy = require "lib.itchy"       -- or wherever you saved it
+local game = {
+  target = "guard13007/asteroid-dodge", -- target or url must be defined
+  version = "1.0.0"                     -- optional, config options listed below
+}
+itchy:check_version(game)
+
+-- somewhere where this will be called periodically
+local data = itchy:new_version(game)  -- passing the game table is not necessary
+if data then
+  -- easiest usage, just print the message to the user
+  love.graphics.print("Version: 1.0.0 Latest: " .. data.message)
 end
 ```
 
-Since it is run as a thread, you can cancel it with `versionChecker:kill()` and
-start it again or with a different configuration later with `:start()`.
+You can cancel it with `itchy:kill_version_checker(game)`, and start a new
+version checker with `itchy:check_version({})` any time you like.
 
 ### Version Information Example
 
@@ -52,7 +58,7 @@ based on this value. If it is unable to extract it or compare, `version` and
 `latest` will be `nil`.
 
 If HTTP status 200 (OK) is encountered or a version is successfully parsed from
-a response, the script terminates (or moves on to checking on an `interval`.)
+a response, the script terminates (or moves on to checking on an interval.)
 Otherwise, it will keep trying with an exponential back-off starting at a 1
 second delay, capped at retrying every 10 minutes.
 
@@ -63,17 +69,25 @@ At minimum a `url` or `target` must be specified.
 * `url` (string) If you have a different URL to check for the latest version
   from, you can specify it here.
 * `target` (string) The target string of your game on itch.io
-  (username/game-slug)
+  (username/game-slug).
 * `channel` (string) If you do not specify the channel name to look for on
   itch.io, it will use `osx` for Mac OS / OS X, `win32` for Windows, `linux` for
   Linux, `android` for Android, `ios` for iOS, and if any other OS is returned
   by `love.system.getOS()` it will use that string as-is.
 * `version` (string/number) Version of the game running right now.
-* `proxy` (string) This library uses an [HTTP proxy](https://github.com/Guard13007/insecure-proxy)
-  for the HTTPS call to itch.io's API. By default it uses `https://104.236.139.220:16343`
-  which is on a DigitalOcean VPS I own. If you'd rather use a different proxy
-  server, you can specify it here.
 * `interval` (number) If specified, a check for the latest version will happen
   again every `interval` seconds.
-* `thread_channel` (string) If specified, will use a different named thread
-  channel to return results to.
+* `luajit_request` (string) luajit-request is checked for in `.` and `lib/.`, if
+  you have it elsewhere, specify its location here.
+
+The following options are available, but generally should be left for itchy to
+handle itself:
+
+* `proxy` (string) An [HTTP proxy](https://github.com/Guard13007/insecure-proxy)
+  is used if luajit-request is unavailable, unless `proxy == false`. By default,
+  `https://104.236.139.220:16343` is used, which is running on a DigitalOcean
+  VPS I own. You can specify a different proxy here.
+* `thread_channel` (string) itchy uses a channel named `itchy` for version
+  checking. You can call itchy's functions with different data tables and it
+  will use different threads & channels for each. You can also specify a channel
+  name here.

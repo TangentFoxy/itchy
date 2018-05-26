@@ -136,7 +136,7 @@ thread = function(...)
   end
   return start(...)
 end
-if not (love.graphics or love.window) then
+if arg == nil then
   return thread(...)
 end
 local thread_data = love.filesystem.newFileData(string.dump(thread), "itchy version checker")

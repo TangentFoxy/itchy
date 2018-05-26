@@ -102,7 +102,7 @@ thread = (...) ->
   start(...)
 
 -- detect if we are running in a thread, run directly if we are
-return thread(...) unless love.graphics or love.window
+return thread(...) if arg == nil
 
 thread_data = love.filesystem.newFileData string.dump(thread), "itchy version checker"
 

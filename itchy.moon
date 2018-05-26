@@ -4,15 +4,17 @@ thread = (...) ->
   import thread, timer from love
 
   http = require "socket.http"
-  _, libcurl = pcall -> return require "luajit-request"
-  unless libcurl
-    _, libcurl = pcall -> return require "lib.luajit-request"
+  ok, libcurl = pcall -> return require "luajit-request"
+  unless ok
+    ok, libcurl = pcall -> return require "lib.luajit-request"
+    libcurl = nil unless ok
 
   request = (data) ->
     result = {}
     unless libcurl
       if data.luajit_request
-        _, libcurl = pcall -> return require data.luajit_request
+        ok, libcurl = pcall -> return require data.luajit_request
+        libcurl = nil unless ok
     if libcurl
       response = libcurl.send data.url or "https://api.itch.io/wharf/latest?target=#{data.target}&channel_name=#{data.channel}"
       result.body = response.body
@@ -109,20 +111,20 @@ configs, results = {}, {}
 local default_data
 
 itchy = {
-  check_version: (data) ->
+  check_version: (data) =>
     default_data = data unless default_data
     if (not data.thread_channel) and next configs
       data.thread_channel = "itchy-#{counter}"
       counter += 1
     configs[data] = data
     love.thread.newThread(thread_data)\start data
-  new_version: (data=default_data) ->
+  new_version: (data=default_data) =>
     if data and configs[data]
       channel = love.thread.getChannel data.thread_channel or "itchy"
       if channel\getCount! > 0
         results[data] = channel\demand!
       return results[data] -- nil or data (new or old)
-  kill_version_checker: (data=default_data) ->
+  kill_version_checker: (data=default_data) =>
     configs[data] = nil
     results[data] = nil
     default_data = nil if data == default_data

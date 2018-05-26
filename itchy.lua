@@ -8,22 +8,28 @@ thread = function(...)
     thread, timer = _obj_0.thread, _obj_0.timer
   end
   local http = require("socket.http")
-  local _, libcurl = pcall(function()
+  local ok, libcurl = pcall(function()
     return require("luajit-request")
   end)
-  if not (libcurl) then
-    _, libcurl = pcall(function()
+  if not (ok) then
+    ok, libcurl = pcall(function()
       return require("lib.luajit-request")
     end)
+    if not (ok) then
+      libcurl = nil
+    end
   end
   local request
   request = function(data)
     local result = { }
     if not (libcurl) then
       if data.luajit_request then
-        _, libcurl = pcall(function()
+        ok, libcurl = pcall(function()
           return require(data.luajit_request)
         end)
+        if not (ok) then
+          libcurl = nil
+        end
       end
     end
     if libcurl then
@@ -58,7 +64,6 @@ thread = function(...)
             send:push(result)
             return false
           end
-          local ok
           ok, result = request(data)
           if not (ok) then
             send:push(result)
@@ -134,3 +139,43 @@ end
 if not (love.graphics or love.window) then
   return thread(...)
 end
+local thread_data = love.filesystem.newFileData(string.dump(thread), "itchy version checker")
+local counter = 1
+local configs, results = { }, { }
+local default_data
+local itchy = {
+  check_version = function(self, data)
+    if not (default_data) then
+      default_data = data
+    end
+    if (not data.thread_channel) and next(configs) then
+      data.thread_channel = "itchy-" .. tostring(counter)
+      counter = counter + 1
+    end
+    configs[data] = data
+    return love.thread.newThread(thread_data):start(data)
+  end,
+  new_version = function(self, data)
+    if data == nil then
+      data = default_data
+    end
+    if data and configs[data] then
+      local channel = love.thread.getChannel(data.thread_channel or "itchy")
+      if channel:getCount() > 0 then
+        results[data] = channel:demand()
+      end
+      return results[data]
+    end
+  end,
+  kill_version_checker = function(self, data)
+    if data == nil then
+      data = default_data
+    end
+    configs[data] = nil
+    results[data] = nil
+    if data == default_data then
+      default_data = nil
+    end
+  end
+}
+return itchy

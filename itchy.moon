@@ -71,7 +71,7 @@ thread = (...) ->
 
   -- data should be a table of information
   start = (data) ->
-    data.proxy = "http://45.55.113.149:16343" if data.proxy == nil and (not data.url)
+    data.proxy = "http://insecure-proxy.tangentfox.com" if data.proxy == nil and (not data.url)
 
     -- channel can be autodetected if not specified
     unless data.channel

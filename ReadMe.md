@@ -98,8 +98,8 @@ handle itself:
 
 * `proxy` (string) An [HTTP proxy](https://github.com/Guard13007/insecure-proxy)
   is used if luajit-request is unavailable, unless `proxy == false`. By default,
-  `https://45.55.113.149:16343` is used, which is running on a DigitalOcean
-  VPS I own. You can specify a different proxy here.
+  `http://insecure-proxy.tangentfox.com` is used. You can specify a different
+  proxy here.
 * `thread_channel` (string) itchy uses a channel named `itchy` for version
   checking. You can call itchy's functions with different data tables and it
   will use different threads & channels for each. You can also specify a channel

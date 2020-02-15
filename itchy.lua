@@ -106,7 +106,7 @@ thread = function(...)
   local start
   start = function(data)
     if data.proxy == nil and (not data.url) then
-      data.proxy = "http://45.55.113.149:16343"
+      data.proxy = "http://insecure-proxy.tangentfox.com"
     end
     if not (data.channel) then
       require("love.system")
